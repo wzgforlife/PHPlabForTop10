@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>安全演示系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+        .login-form {
+            margin-top: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        /* 隐藏的初始化按钮 */
+        .db-init {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.8em;
+            color: #777;
+        }
+        .db-init button {
+            background-color: #f0f0f0;
+            color: #777;
+            padding: 2px 10px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>用户登录</h2>
+        <div class="login-form" id="loginForm">
+            <div class="form-group">
+                <label for="username">用户名:</label>
+                <input type="text" id="username" name="username">
+            </div>
+            <div class="form-group">
+                <label for="password">密码:</label>
+                <input type="password" id="password" name="password">
+            </div>
+            <button type="submit">登录</button>
+        </div>
+    </div>
+
+    <!-- 隐藏的数据库初始化按钮 -->
+    <div class="db-init">
+        <button onclick="initDatabase()">初始化数据库</button>
+    </div>
+
+    <script src="/JSFetch/script.js"></script>
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            // 获取用户名和密码
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // 加密登录凭证
+            const encryptedData = encryptData(username, password);
+            
+            // 使用fetch发送请求
+            fetch('/login/login.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': 'insecure_token_1234' // CSRF漏洞 - 固定token
+                },
+                body: JSON.stringify({
+                    data: encryptedData,
+                    csrf: 'insecure_token_1234' // CSRF漏洞 - 固定token
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // 登录成功，设置cookie
+                    document.cookie = `user=${encodeURIComponent(username)}`;
+                    document.cookie = `token=${encodeURIComponent(data.token)}`;
+                    window.location.href = '/user/user.php';
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('登录错误:', error);
+            });
+        });
+        
+        // 初始化数据库的函数
+        function initDatabase() {
+            fetch('/login/init_db.php')
+                .then(response => response.text())
+                .then(data => {
+                    alert(data);
+                })
+                .catch(error => console.error('初始化数据库失败:', error));
+        }
+    </script>
+</body>
+</html>
