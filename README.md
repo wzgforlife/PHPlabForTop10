@@ -1,2 +1,2 @@
 # PHPlabForTop10
-# Try to solve
+Try to solve
